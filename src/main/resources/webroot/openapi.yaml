@@ -1,0 +1,90 @@
+# Note: An invalid OpenAPI 3 yaml file will cause the following exception at startup:
+# io.vertx.ext.web.api.contract.RouterFactoryException: Wrong specification url/path: webroot/openapi.yaml
+
+openapi: 3.0.0
+
+info:
+  version: 1.0
+  title: Metrics Hub to Postgres
+  x-logo:
+    url: "./logo.png"
+
+servers:
+  - url: 'http://localhost:8087'
+    description: Local development server
+
+paths:
+
+  # ------------
+  # Admin actions
+  # ------------
+
+  /fetch:
+    post:
+      description: Start run
+      summary: Refreshes data by querying triple store and writes the results into a postgres database
+      operationId: fetch
+      responses:
+        202:
+          description: Request accepted
+        500:
+          description: Internal server error
+
+  /callback/{distributionId}:
+    post:
+      description: URL check callback
+      summary: Accepts callback from the URL checker service
+      operationId: urlCheckCallback
+      parameters:
+        - name: distributionId
+          in: path
+          description: ID of distribution
+          required: true
+          schema:
+            type: string
+#      requestBody:
+#        content:
+#          application/json:
+#            schema:
+#              $ref: '#/components/schemas/UrlCheckCallback'
+      responses:
+        200:
+          description: Request accepted
+        400:
+          description: Bad request
+        500:
+          description: Internal server error
+
+  /clean/{date}:
+    post:
+      description: Clean outdated entities
+      summary: All distributions, datasets, and catalogues last changed before a certain date are removed
+      operationId: clean
+      parameters:
+        - name: date
+          in: path
+          description: Entities older than this are deleted (yyyy-mm-dd)
+          required: true
+          schema:
+            type: string
+      responses:
+        202:
+          description: Request has been accepted
+
+components:
+  schemas:
+    UrlCheckCallback:
+      description: Represents the results sent by the URL checker
+      type: array
+      items:
+        type: object
+        properties:
+          url:
+            type: string
+          statusCode:
+            type: number
+            format: int32
+          mimeType:
+            type: string
+          message:
+            type: string
